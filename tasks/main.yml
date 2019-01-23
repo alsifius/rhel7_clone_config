@@ -1,0 +1,113 @@
+---
+# tasks file for rhel7_clone_config
+
+
+- name: Add satellite server to host file
+  lineinfile:
+    path: /etc/hosts
+    line: 192.168.122.1     big-dog.willis.alsifius.com             big-dog.kvm.willis.alsifius.com         big-dog         bg
+ 
+- name: Install of satellite server config package
+  yum: 
+    name: http://big-dog.kvm.willis.alsifius.com/pub/katello-ca-consumer-latest.noarch.rpm
+    state: present
+  tags: katello_rpm_install
+
+- name: Ensure RHEL subscription is correct
+  redhat_subscription:
+    state: present
+    activationkey: RHEL7
+    org_id: cc69d9a1-2984-44f5-b8de-44c23fd5633d
+    pool: 4028802b5e81d5c001618be8f7b036a0
+    server_hostname: "big-dog.willis.alsifius.com"
+
+- name: Installation of the libselinux-python package
+  yum:
+    name: libselinux-python
+    state: present
+
+- name: Setup networking interface(s)
+  template: 
+    owner: root
+    group: root
+    mode: 644 
+    src: ifcfg-eth0-RHEL7.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+
+- name: Set the hostname of the system
+  hostname:
+    name: "{{ ansible_hostname }}"
+
+- name: add current systems name and IP address to /etc/hosts file
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ ipaddr }}     {{ ansible_hostname }}.kvm.willis.alsifius.com          {{ ansible_hostname }}"
+    state: present
+
+- name: Install standard rpms for this environment
+  yum:
+    name: 
+      - vim-enhanced
+      - yum-cron
+      - puppet
+      - katello-agent
+      - openscap-scanner
+      - scap-security-guide
+      - openscap-utils
+      - screen
+      - mlocate
+      - htop
+      - tuned
+      - tuned-utils
+      - qemu-guest-agent
+      - bash-completion
+      - sssd-tools
+      - kernel
+      - kernel-devel
+      - kernel-headers
+    state: latest
+
+- name: check tuned profile
+  command: tuned-adm active
+  register: tuned_adm
+  changed_when: False
+
+- name: Set tuned profile to virtual-guest
+  command: tuned-adm profile virtual-guest
+  when: "'Current active profile: virtual-guest' not in tuned_adm.stdout"
+
+- name: enable puppet
+  service:
+    name: puppet
+    enabled: yes
+    state: started
+
+- name: enable goferd
+  service:
+    name: goferd
+    enabled: yes
+    state: started
+
+- name: Configure puppet
+  template:
+    src: /etc/ansible/templates/puppet.conf.j2
+    dest: /etc/puppet/puppet.conf
+    owner: root
+    group: wheel
+    mode: 0644
+
+- name: Push authorized_keys file
+  template:
+    src: /etc/ansible/templates/authorized_keys.j2
+    dest: /root/.ssh/authorized_keys
+    owner: root
+    group: wheel
+    mode: 0600
+
+- name: Push .bashrc file
+  template:
+    src: /etc/ansible/templates/bashrc.j2
+    dest: /root/.bashrc
+    owner: root
+    group: wheel
+    mode: 0644

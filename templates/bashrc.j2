@@ -1,0 +1,22 @@
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+alias sm='subscription-manager'
+alias lg='ls -liahG --color=auto'
+alias lsrt='ls -liahsrtG --color=auto'
+alias netstat='netstat -planetu | grep'
+alias psg='ps -ef | grep'
+alias jws='ssh root@jws'
+alias rhds1='ssh root@rhds1'
+alias rhds2='ssh root@rhds2'
+alias rhds3='ssh root@rhds3'
+alias nag='ssh root@nag'
+alias fire='firewall-cmd'
+alias vi='vim'
+alias grep='grep --color=auto'
+alias l.='ls -d .* --color=auto'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias which='alias | /usr/bin/which --tty-only --read-alias --show-dot --show-tilde'
